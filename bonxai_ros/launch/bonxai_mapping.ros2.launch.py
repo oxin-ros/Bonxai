@@ -13,9 +13,9 @@ def generate_launch_description():
     bonxai_params = os.path.join(
         get_package_share_directory(package),
         'params',
-        'bonxai_params.yaml'
+        'bonxai_params.ros2.yaml'
         )
-        
+
     # Bonxai Server Node
     bonxai_node = Node(
         package=package,
@@ -39,7 +39,7 @@ def generate_launch_description():
 
     # Launch Nodes
     return LaunchDescription(
-        [            
+        [
             bonxai_node,
             rviz_node,
         ]
