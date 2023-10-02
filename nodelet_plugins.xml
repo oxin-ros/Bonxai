@@ -1,0 +1,7 @@
+<library path="lib/libbonxai_server">
+  <class name="bonxai_server/BonxaiServer" type="bonxai_server::BonxaiServer" base_class_type="nodelet::Nodelet">
+    <description>
+      Bonxai server ROS nodelet.
+    </description>
+  </class>
+</library>

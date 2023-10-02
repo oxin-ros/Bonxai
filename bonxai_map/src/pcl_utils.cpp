@@ -1,14 +1,31 @@
 #include "bonxai_map/pcl_utils.hpp"
 
 #include <memory>
-#include <filesystem>
+#if defined(__has_include)
+  #if __has_include(<filesystem>)
+    #include <filesystem>
+    namespace fs = std::filesystem;
+  #elif __has_include(<experimental/filesystem>)
+    #include <experimental/filesystem>
+    namespace fs = std::experimental::filesystem;
+  #elif __has_include(<boost/filesystem.hpp>)
+    #include <boost/filesystem.hpp>
+    namespace fs = boost::filesystem;
+  #else
+    static_assert(false, "No filesystem support detected");
+  #endif
+#else
+  // Fallback to boost::filesystem.
+  #include <boost/filesystem.hpp>
+  namespace fs = boost::filesystem;
+#endif
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_types.h>
 
 template <typename PointT>
 bool ReadPointsFromPCD_Impl(const std::string& filepath, std::vector<PointT>& points)
 {
-  if (!std::filesystem::exists(filepath))
+  if (!fs::exists(filepath))
   {
     throw std::runtime_error("File doesn't exist");
   }

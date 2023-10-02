@@ -5,13 +5,20 @@
   <version>0.0.0</version>
   <description>TODO: Package description</description>
   <maintainer email="enrique.aleman1998@gmail.com">enrique</maintainer>
-  <license>TODO: License declaration</license>
+  <license>MPL-2</license>
 
-  <!-- <buildtool_depend>ament_cmake</buildtool_depend> -->
-  <buildtool_depend>ament_cmake_auto</buildtool_depend>
+  <!-- ROS 2 -->
+  <buildtool_depend condition="$ROS_VERSION == 2">ament_cmake_auto</buildtool_depend>
+  <depend condition="$ROS_VERSION == 2">rclcpp</depend>
+  <depend condition="$ROS_VERSION == 2">rclcpp_components</depend>
+  <test_depend condition="$ROS_VERSION == 2">ament_lint_auto</test_depend>
+  <test_depend condition="$ROS_VERSION == 2">ament_lint_common</test_depend>
 
-  <depend>rclcpp</depend>
-  <depend>rclcpp_components</depend>
+  <!-- ROS 1 -->
+  <buildtool_depend condition="$ROS_VERSION == 1">catkin</buildtool_depend>
+  <depend condition="$ROS_VERSION == 1">nodelet</depend>
+  <depend condition="$ROS_VERSION == 1">roscpp</depend>
+
   <depend>pcl_conversions</depend>
   <depend>sensor_msgs</depend>
   <depend>tf2</depend>
@@ -22,10 +29,9 @@
   <depend>message_filters</depend>
   <depend>std_srvs</depend>
 
-  <test_depend>ament_lint_auto</test_depend>
-  <test_depend>ament_lint_common</test_depend>
-
   <export>
-    <build_type>ament_cmake</build_type>
+    <build_type condition="$ROS_VERSION == 1">catkin</build_type>
+    <build_type condition="$ROS_VERSION == 2">ament_cmake</build_type>
+    <nodelet condition="$ROS_VERSION == 1" plugin="${prefix}/nodelet_plugins.xml" />
   </export>
 </package>
