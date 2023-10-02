@@ -1,4 +1,4 @@
-#include "bonxai_server.hpp"
+#include "bonxai_server.ros2.hpp"
 
 namespace
 {
