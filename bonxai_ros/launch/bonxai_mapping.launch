@@ -5,7 +5,7 @@
     <node pkg="nodelet" type="nodelet" name="bonxai_mapping"
         args="standalone bonxai_server/BonxaiServer" output="screen">
 
-        <rosparam command="load" file="$(find bonxai_ros)/params/bonxai_mapping.ros1.yaml" />
+        <rosparam command="load" file="$(find bonxai_ros)/params/bonxai_params.ros1.yaml" />
 
         <!-- data source to integrate (PointCloud2) -->
         <remap from="~cloud_in" to="$(arg topic)" />

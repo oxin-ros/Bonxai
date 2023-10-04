@@ -4,12 +4,34 @@ namespace bonxai_server
 {
 void BonxaiServer::onInit()
 {
-  // get nodehandles
+  // Get the node handles.
   node_handle_ = this->getNodeHandle();
   private_node_handle_ = this->getPrivateNodeHandle();
 
   // Load the parameters.
   loadParameters();
+
+  // dynamic reconfigure
+  dynamic_reconfigure_srv_ = std::make_unique<dynamic_reconfigure::Server<bonxai_ros::BonxaiServerConfig>>(
+    dynamic_reconfigure_mutex_,
+    private_node_handle_);
+
+  dynamic_reconfigure_clbk_ = boost::bind(&BonxaiServer::dynamicReconfigureCallback, this, _1, _2);
+
+  bonxai_ros::BonxaiServerConfig initial_config;
+  initial_config.occupancy_min_z = occupancy_min_z_;
+  initial_config.occupancy_max_z = occupancy_max_z_;
+  initial_config.max_range = max_range_;
+  initial_config.hit = sensor_model_hit_;
+  initial_config.miss = sensor_model_miss_;
+  initial_config.min = sensor_model_min_;
+  initial_config.max = sensor_model_max_;
+
+  dynamic_reconfigure_srv_->setConfigDefault(initial_config);
+  dynamic_reconfigure_srv_->updateConfig(initial_config);
+
+  // put this after updateConfig!
+  dynamic_reconfigure_srv_->setCallback(dynamic_reconfigure_clbk_);
 
   // initialize bonxai object & params
   NODELET_INFO("Voxel resolution %f", res_);
@@ -142,35 +164,62 @@ void BonxaiServer::insertCloudCallback(const PointCloud2& cloud)
   publishAll(cloud.header.stamp);
 }
 
-// rcl_interfaces::msg::SetParametersResult
-// BonxaiServer::onParameter(const std::vector<rclcpp::Parameter>& parameters)
-// {
-//   update_param(parameters, "occupancy_min_z", occupancy_min_z_);
-//   update_param(parameters, "occupancy_max_z", occupancy_max_z_);
+void BonxaiServer::dynamicReconfigureCallback(bonxai_ros::BonxaiServerConfig &config, uint32_t /* level */)
+{
+  boost::recursive_mutex::scoped_lock lock(dynamic_reconfigure_mutex_);
 
-//   double sensor_model_min{ get_parameter("sensor_model.min").as_double() };
-//   update_param(parameters, "sensor_model.min", sensor_model_min);
-//   double sensor_model_max{ get_parameter("sensor_model.max").as_double() };
-//   update_param(parameters, "sensor_model.max", sensor_model_max);
-//   double sensor_model_hit{ get_parameter("sensor_model.hit").as_double() };
-//   update_param(parameters, "sensor_model.hit", sensor_model_hit);
-//   double sensor_model_miss{ get_parameter("sensor_model.miss").as_double() };
-//   update_param(parameters, "sensor_model.miss", sensor_model_miss);
+  if (occupancy_min_z_ != config.occupancy_min_z)
+  {
+    occupancy_min_z_ = config.occupancy_min_z;
+    NODELET_DEBUG("Setting occupancy_min_z to: %f.", occupancy_min_z_);
+  }
 
-//   BonxaiT::Options options = { bonxai_->logods(sensor_model_miss),
-//                                bonxai_->logods(sensor_model_hit),
-//                                bonxai_->logods(sensor_model_min),
-//                                bonxai_->logods(sensor_model_max) };
+  if (occupancy_max_z_ != config.occupancy_max_z)
+  {
+    occupancy_max_z_ = config.occupancy_max_z;
+    NODELET_DEBUG("Setting occupancy_max_z to: %f.", occupancy_max_z_);
+  }
 
-//   bonxai_->setOptions(options);
+  if (max_range_ != config.max_range)
+  {
+    max_range_ = config.max_range;
+    NODELET_DEBUG("Setting sensor_model/max_range to: %f.", max_range_);
+  }
 
-//   publishAll(now());
+  if (sensor_model_hit_ != config.hit)
+  {
+    sensor_model_hit_ = config.hit;
+    NODELET_DEBUG("Setting sensor_model/hit to: %f.", sensor_model_hit_);
+  }
 
-//   rcl_interfaces::msg::SetParametersResult result;
-//   result.successful = true;
-//   result.reason = "success";
-//   return result;
-// }
+  if (sensor_model_miss_ != config.miss)
+  {
+    sensor_model_miss_ = config.miss;
+    NODELET_DEBUG("Setting sensor_model/miss to: %f.", sensor_model_miss_);
+  }
+
+  if (sensor_model_min_ != config.min)
+  {
+    sensor_model_min_ = config.min;
+    NODELET_DEBUG("Setting sensor_model/min to: %f.", sensor_model_min_);
+  }
+
+  if (sensor_model_max_ != config.max)
+  {
+    sensor_model_max_ = config.max;
+    NODELET_DEBUG("Setting sensor_model/max to: %f.", sensor_model_max_);
+  }
+
+  BonxaiT::Options options = { bonxai_->logods(sensor_model_miss_),
+                               bonxai_->logods(sensor_model_hit_),
+                               bonxai_->logods(sensor_model_min_),
+                               bonxai_->logods(sensor_model_max_) };
+
+  bonxai_->setOptions(options);
+
+  publishAll(ros::Time::now());
+
+}
 
 void BonxaiServer::publishAll(const ros::Time& rostime)
 {

@@ -97,9 +97,11 @@ elseif(${ROS_VERSION} EQUAL 1)
   ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
   ## is used, also find other catkin packages
   find_package(catkin REQUIRED COMPONENTS
+    dynamic_reconfigure
     message_filters
     nodelet
     pcl_conversions
+    pluginlib
     roscpp
     sensor_msgs
     std_srvs
@@ -108,6 +110,10 @@ elseif(${ROS_VERSION} EQUAL 1)
     tf2_geometry_msgs
     tf2_ros
     visualization_msgs
+  )
+
+  generate_dynamic_reconfigure_options(
+    bonxai_ros/cfg/BonxaiServer.cfg
   )
 
   # Add catkin-specific configuration here
@@ -128,8 +134,11 @@ elseif(${ROS_VERSION} EQUAL 1)
       3rdparty
     LIBRARIES bonxai_server
     CATKIN_DEPENDS
+      dynamic_reconfigure
       message_filters
+      nodelet
       pcl_conversions
+      pluginlib
       roscpp
       sensor_msgs
       std_srvs
@@ -159,7 +168,11 @@ elseif(${ROS_VERSION} EQUAL 1)
 
   ## Add cmake target dependencies of the executable
   ## same as for the library above
-  add_dependencies(bonxai_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+  add_dependencies(bonxai_server
+    ${${PROJECT_NAME}_EXPORTED_TARGETS}
+    ${catkin_EXPORTED_TARGETS}
+    ${PROJECT_NAME}_gencfg
+  )
 
   ## Specify libraries to link a library or executable target against
   target_link_libraries(bonxai_server
