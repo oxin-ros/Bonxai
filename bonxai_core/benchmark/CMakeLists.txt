@@ -1,3 +1,7 @@
+
+find_package(octomap QUIET)
+find_package(LZ4 QUIET)
+
 if(NOT octomap_FOUND)
     message("Missing octomap. Skipping related benchmarks")
 endif()

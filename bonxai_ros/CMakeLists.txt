@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(Bonxai)
+project(bonxai_ros VERSION 0.2.0 LANGUAGES CXX)
 
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 
@@ -19,12 +19,12 @@ set(CMAKE_CXX_FLAGS "-fno-omit-frame-pointer -g")
 set(CMAKE_CONFIG_PATH ${CMAKE_MODULE_PATH}  "${CMAKE_CURRENT_LIST_DIR}/cmake")
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CONFIG_PATH}")
 
-find_package(PCL REQUIRED COMPONENTS common io)
-
 find_package(benchmark QUIET)
-find_package(octomap QUIET)
-find_package(LZ4 QUIET)
+find_package(bonxai_map QUIET REQUIRED)
 find_package(Eigen3 QUIET)
+find_package(LZ4 QUIET)
+find_package(octomap QUIET)
+find_package(PCL QUIET REQUIRED COMPONENTS common io)
 
 #---- Use Address sanitizer if compiled in Debug mode ----
 option(BONXAI_SANITIZE "Add address sanitizer when compiling in Debug mode" ON)
@@ -39,11 +39,6 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic -fno-omit-frame-pointer)
 endif()
 
-
-####################################################
-add_subdirectory(bonxai_core)
-add_subdirectory(bonxai_map)
-
 find_package(ros_environment QUIET)
 if(NOT ros_environment_FOUND)
   message(STATUS "ROS environment not found, skipping ROS build")
@@ -55,8 +50,6 @@ set(ROS_VERSION $ENV{ROS_VERSION})
 # === ROS2 (AMENT) =============================================================
 if(${ROS_VERSION} EQUAL 2)
 
-  project(bonxai_ros)
-
   find_package(ament_cmake REQUIRED)
 
   # Add colcon-specific configuration here
@@ -65,10 +58,14 @@ if(${ROS_VERSION} EQUAL 2)
   find_package(ament_cmake_auto REQUIRED)
   ament_auto_find_build_dependencies()
 
-  include_directories(bonxai_ros/include 3rdparty)
+  include_directories(
+    include
+    ${bonxai_core_INCLUDE_DIRS}
+    ${bonxai_map_INCLUDE_DIRS}
+  )
 
   ament_auto_add_library(bonxai_server SHARED
-    bonxai_ros/src/bonxai_server.ros2.cpp
+    src/bonxai_server.ros2.cpp
   )
 
   target_link_libraries(bonxai_server
@@ -83,23 +80,23 @@ if(${ROS_VERSION} EQUAL 2)
 
   ament_auto_package(
     INSTALL_TO_SHARE
-    bonxai_ros/launch
-    bonxai_ros/rviz
-    bonxai_ros/params
+    launch
+    rviz
+    params
   )
 
 # === ROS1 (CATKIN) ============================================================
 elseif(${ROS_VERSION} EQUAL 1)
 
-  project(bonxai_ros)
-
   ## Find catkin macros and libraries
   ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
   ## is used, also find other catkin packages
   find_package(catkin REQUIRED COMPONENTS
+    dynamic_reconfigure
     message_filters
     nodelet
     pcl_conversions
+    pluginlib
     roscpp
     sensor_msgs
     std_srvs
@@ -108,6 +105,10 @@ elseif(${ROS_VERSION} EQUAL 1)
     tf2_geometry_msgs
     tf2_ros
     visualization_msgs
+  )
+
+  generate_dynamic_reconfigure_options(
+    cfg/BonxaiServer.cfg
   )
 
   # Add catkin-specific configuration here
@@ -124,12 +125,15 @@ elseif(${ROS_VERSION} EQUAL 1)
   ## DEPENDS: system dependencies of this project that dependent projects also need
   catkin_package(
     INCLUDE_DIRS
-      bonxai_ros/include
-      3rdparty
+      include
     LIBRARIES bonxai_server
+    DEPENDS
+      bonxai_map
     CATKIN_DEPENDS
+      dynamic_reconfigure
       message_filters
       pcl_conversions
+      pluginlib
       roscpp
       sensor_msgs
       std_srvs
@@ -144,17 +148,9 @@ elseif(${ROS_VERSION} EQUAL 1)
   ## Build ##
   ###########
 
-  ## Specify additional locations of header files
-  ## Your package locations should be listed before other locations
-  include_directories(
-    bonxai_ros/include
-    3rdparty
-    ${catkin_INCLUDE_DIRS}
-  )
-
   ## Declare a C++ library
   add_library(bonxai_server
-    bonxai_ros/src/bonxai_server.ros1.cpp
+    src/bonxai_server.ros1.cpp
   )
 
   ## Add cmake target dependencies of the executable
@@ -166,7 +162,31 @@ elseif(${ROS_VERSION} EQUAL 1)
     bonxai_map
     ${catkin_LIBRARIES}
     ${PCL_LIBRARIES}
+    ${bonxai_map_LIBRARIES}
   )
+
+  target_link_directories(
+    bonxai_server
+    PUBLIC
+      ${PCL_LIBRARY_DIRS}
+      ${bonxai_map_LIBRARY_DIRS}
+      ${CATKIN_PACKAGE_LIB_DESTINATION}
+      ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_LIB_DESTINATION}
+  )
+
+  target_include_directories(
+    bonxai_server
+    PUBLIC
+      include
+      ${catkin_INCLUDE_DIRS}
+      ${PCL_INCLUDE_DIRS}
+      ${bonxai_map_INCLUDE_DIRS}
+      ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+  )
+
+  add_dependencies(
+    bonxai_server
+    ${PROJECT_NAME}_gencfg)
 
   #############
   ## Install ##
@@ -180,7 +200,7 @@ elseif(${ROS_VERSION} EQUAL 1)
   )
 
   ## Mark cpp header files for installation
-  install(DIRECTORY bonxai_ros/include
+  install(DIRECTORY include
     DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
     PATTERN "*ros2*" EXCLUDE
   )
@@ -191,12 +211,12 @@ elseif(${ROS_VERSION} EQUAL 1)
     DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
   )
   install(DIRECTORY
-    bonxai_ros/launch
+    launch
     DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
     PATTERN "*ros2*" EXCLUDE
   )
   install(DIRECTORY
-    bonxai_ros/params
+    params
     DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
     PATTERN "*ros2*" EXCLUDE
   )

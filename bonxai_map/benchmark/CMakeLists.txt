@@ -1,3 +1,4 @@
+find_package(octomap QUIET)
 
 add_executable(benchmark_pointcloud benchmark_pointcloud.cpp)
 
