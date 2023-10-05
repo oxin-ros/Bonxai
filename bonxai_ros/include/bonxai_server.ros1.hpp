@@ -8,6 +8,7 @@
 
 #include "bonxai_map/pcl_utils.hpp"
 #include "bonxai_map/probabilistic_map.hpp"
+#include "bonxai_ros/BonxaiServerConfig.h"
 #include "bonxai/bonxai.hpp"
 
 #include <pcl/segmentation/sac_segmentation.h>
@@ -26,6 +27,7 @@
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/message_filter.h>
 #include <tf2_ros/transform_listener.h>
+#include <dynamic_reconfigure/server.h>
 
 namespace bonxai_server
 {
@@ -115,10 +117,11 @@ protected:
   template <typename T>
   bool loadParameter(const std::string& key, T& value, const T& default_value);
 
-  // TODO: Dynamic reconfigure...
-  // OnSetParametersCallbackHandle::SharedPtr set_param_res_;
-  // rcl_interfaces::msg::SetParametersResult
-  // onParameter(const std::vector<rclcpp::Parameter>& parameters);
+  /** \brief Pointer to a dynamic reconfigure service. */
+  std::unique_ptr<dynamic_reconfigure::Server<bonxai_ros::BonxaiServerConfig>> dynamic_reconfigure_srv_;
+  dynamic_reconfigure::Server<bonxai_ros::BonxaiServerConfig>::CallbackType dynamic_reconfigure_clbk_;
+  void dynamicReconfigureCallback(bonxai_ros::BonxaiServerConfig &config, uint32_t level);
+  boost::recursive_mutex dynamic_reconfigure_mutex_;
 
   ros::Publisher point_cloud_pub_;
   std::shared_ptr<message_filters::Subscriber<PointCloud2>> point_cloud_sub_;
@@ -144,9 +147,6 @@ protected:
 
   bool publish_2d_map_;
   bool map_origin_changed;
-  // octomap::OcTreeKey padded_min_key_;
-  unsigned multires_2d_scale_;
-  bool project_complete_map_;
 
   double sensor_model_hit_;
   double sensor_model_miss_;
