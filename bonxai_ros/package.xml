@@ -18,9 +18,6 @@
   <depend>message_filters</depend>
   <depend>std_srvs</depend>
 
-  <depend>bonxai_core</depend>
-  <depend>bonxai_map</depend>
-
   <!-- ROS 2 -->
   <buildtool_depend condition="$ROS_VERSION == 2">ament_cmake_auto</buildtool_depend>
   <depend condition="$ROS_VERSION == 2">rclcpp</depend>

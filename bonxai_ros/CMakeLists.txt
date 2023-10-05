@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.10)
 project(bonxai_ros VERSION 0.2.0 LANGUAGES CXX)
 
+set(ignore ${CATKIN_INSTALL_INTO_PREFIX_ROOT})
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 
   message(STATUS "Setting build type to 'RelWithDebInfo' as none was specified.")
@@ -20,7 +23,6 @@ set(CMAKE_CONFIG_PATH ${CMAKE_MODULE_PATH}  "${CMAKE_CURRENT_LIST_DIR}/cmake")
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CONFIG_PATH}")
 
 find_package(benchmark QUIET)
-find_package(bonxai_map QUIET REQUIRED)
 find_package(Eigen3 QUIET)
 find_package(LZ4 QUIET)
 find_package(octomap QUIET)
@@ -38,6 +40,17 @@ endif()
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic -fno-omit-frame-pointer)
 endif()
+
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../bonxai_core ${CMAKE_CURRENT_BINARY_DIR}/bonxai)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../bonxai_map ${CMAKE_CURRENT_BINARY_DIR}/bonxai_map)
+
+include_directories(
+  ${CMAKE_CURRENT_SOURCE_DIR}/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/../bonxai_core/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/../bonxai_map/include
+  ${EIGEN3_INCLUDE_DIR}
+  ${PCL_INCLUDE_DIRS}
+)
 
 find_package(ros_environment QUIET)
 if(NOT ros_environment_FOUND)
@@ -60,8 +73,6 @@ if(${ROS_VERSION} EQUAL 2)
 
   include_directories(
     include
-    ${bonxai_core_INCLUDE_DIRS}
-    ${bonxai_map_INCLUDE_DIRS}
   )
 
   ament_auto_add_library(bonxai_server SHARED
@@ -162,14 +173,12 @@ elseif(${ROS_VERSION} EQUAL 1)
     bonxai_map
     ${catkin_LIBRARIES}
     ${PCL_LIBRARIES}
-    ${bonxai_map_LIBRARIES}
   )
 
   target_link_directories(
     bonxai_server
     PUBLIC
       ${PCL_LIBRARY_DIRS}
-      ${bonxai_map_LIBRARY_DIRS}
       ${CATKIN_PACKAGE_LIB_DESTINATION}
       ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_LIB_DESTINATION}
   )
@@ -180,7 +189,6 @@ elseif(${ROS_VERSION} EQUAL 1)
       include
       ${catkin_INCLUDE_DIRS}
       ${PCL_INCLUDE_DIRS}
-      ${bonxai_map_INCLUDE_DIRS}
       ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
   )
 

@@ -1,17 +1,8 @@
 #######################
 # general configuration
 #######################
-
 cmake_minimum_required(VERSION 3.10)
 project(bonxai_map VERSION 0.2.0 LANGUAGES CXX)
-
-# provides default CMAKE_INSTALL_<dir> variables
-include(GNUInstallDirs)
-# helpers to generate <package>Config.cmake
-include(CMakePackageConfigHelpers)
-
-# install location of generated cmake config files
-set(ConfigPackageLocation ${CMAKE_INSTALL_LIBDIR}/${PROJECT_NAME}/cmake)
 
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 
@@ -35,7 +26,6 @@ find_package(PCL QUIET REQUIRED COMPONENTS common io)
 
 find_package(benchmark QUIET)
 find_package(Eigen3 QUIET REQUIRED)
-find_package(bonxai_core QUIET REQUIRED)
 
 #---- Use Address sanitizer if compiled in Debug mode ----
 option(BONXAI_SANITIZE "Add address sanitizer when compiling in Debug mode" ON)
@@ -45,10 +35,11 @@ if(BONXAI_SANITIZE)
     set (CMAKE_LINKER_DEBUG_FLAGS "${CMAKE_LINKER_DEBUG_FLAGS}  -fsanitize=address")
 endif()
 
-
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic -fno-omit-frame-pointer)
 endif()
+
+include_directories(include)
 
 add_library(${PROJECT_NAME}
     src/pcl_utils.cpp
@@ -58,9 +49,8 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
     ${PCL_DEFINITIONS})
 
 target_include_directories(${PROJECT_NAME} PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
-    ${bonxai_core_INCLUDE_DIRS})
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include
+    $<INSTALL_INTERFACE:include>)
 
 target_link_libraries(${PROJECT_NAME} PUBLIC
     ${PCL_LIBRARIES}
@@ -72,55 +62,3 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
 if(benchmark_FOUND AND octomap_FOUND)
     add_subdirectory(benchmark)
 endif()
-
-#################
-# install targets
-#################
-
-# libs and binaries, generate export targets
-install(TARGETS ${PROJECT_NAME}
-  EXPORT ${PROJECT_NAME}Targets
-  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
-# header files, note the "/" after include
-install(DIRECTORY include/
-  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-
-################
-# export targets
-################
-
-# for build tree / in workspace
-export(EXPORT ${PROJECT_NAME}Targets
-  FILE ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Targets.cmake
-  NAMESPACE ${PROJECT_NAME}::)
-# exported targets
-install(EXPORT ${PROJECT_NAME}Targets
-  FILE ${PROJECT_NAME}Targets.cmake
-  NAMESPACE ${PROJECT_NAME}::
-  DESTINATION ${ConfigPackageLocation})
-
-###########################
-# CMake package generation
-###########################
-
-# generate package version file
-write_basic_package_version_file(
-  ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
-  VERSION ${PLAIN_CMAKE_VERSION}
-  COMPATIBILITY SameMajorVersion)
-
-# generate package configuration file
-set(INCLUDE_INSTALL_DIR ${CMAKE_INSTALL_INCLUDEDIR})
-configure_package_config_file(
-  ${PROJECT_NAME}Config.cmake.in
-  ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
-  INSTALL_DESTINATION ${ConfigPackageLocation}
-  PATH_VARS INCLUDE_INSTALL_DIR)
-
-# install the package configuration files
-install(FILES
-  ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
-  ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
-  DESTINATION ${ConfigPackageLocation})

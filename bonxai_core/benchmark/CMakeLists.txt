@@ -1,4 +1,10 @@
 
+find_package(benchmark QUIET)
+if (NOT benchmark_FOUND)
+    message("Missing benchmark. Skipping related benchmarks")
+    return()
+endif()
+
 find_package(octomap QUIET)
 find_package(LZ4 QUIET)
 

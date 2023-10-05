@@ -11,28 +11,6 @@ void BonxaiServer::onInit()
   // Load the parameters.
   loadParameters();
 
-  // dynamic reconfigure
-  dynamic_reconfigure_srv_ = std::make_unique<dynamic_reconfigure::Server<bonxai_ros::BonxaiServerConfig>>(
-    dynamic_reconfigure_mutex_,
-    private_node_handle_);
-
-  dynamic_reconfigure_clbk_ = boost::bind(&BonxaiServer::dynamicReconfigureCallback, this, _1, _2);
-
-  bonxai_ros::BonxaiServerConfig initial_config;
-  initial_config.occupancy_min_z = occupancy_min_z_;
-  initial_config.occupancy_max_z = occupancy_max_z_;
-  initial_config.max_range = max_range_;
-  initial_config.hit = sensor_model_hit_;
-  initial_config.miss = sensor_model_miss_;
-  initial_config.min = sensor_model_min_;
-  initial_config.max = sensor_model_max_;
-
-  dynamic_reconfigure_srv_->setConfigDefault(initial_config);
-  dynamic_reconfigure_srv_->updateConfig(initial_config);
-
-  // put this after updateConfig!
-  dynamic_reconfigure_srv_->setCallback(dynamic_reconfigure_clbk_);
-
   // initialize bonxai object & params
   NODELET_INFO("Voxel resolution %f", res_);
   bonxai_ = std::make_unique<BonxaiT>(res_);
@@ -57,7 +35,6 @@ void BonxaiServer::onInit()
   point_cloud_pub_ = private_node_handle_.advertise<PointCloud2>(
       "bonxai_point_cloud_centers", 1, latched_topics_);
 
-
   tf2_buffer_ = std::make_shared<tf2_ros::Buffer>();
   tf2_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf2_buffer_);
 
@@ -75,7 +52,27 @@ void BonxaiServer::onInit()
   reset_srv_ = private_node_handle_.advertiseService(
     "reset", &BonxaiServer::resetSrv, this);
 
-  // TODO: Dynamic reconfigure.
+  // dynamic reconfigure
+  dynamic_reconfigure_srv_ = std::make_unique<dynamic_reconfigure::Server<bonxai_ros::BonxaiServerConfig>>(
+    dynamic_reconfigure_mutex_,
+    private_node_handle_);
+
+  dynamic_reconfigure_clbk_ = boost::bind(&BonxaiServer::dynamicReconfigureCallback, this, _1, _2);
+
+  bonxai_ros::BonxaiServerConfig initial_config;
+  initial_config.occupancy_min_z = occupancy_min_z_;
+  initial_config.occupancy_max_z = occupancy_max_z_;
+  initial_config.max_range = max_range_;
+  initial_config.hit = sensor_model_hit_;
+  initial_config.miss = sensor_model_miss_;
+  initial_config.min = sensor_model_min_;
+  initial_config.max = sensor_model_max_;
+
+  dynamic_reconfigure_srv_->setConfigDefault(initial_config);
+  dynamic_reconfigure_srv_->updateConfig(initial_config);
+
+  // put this after updateConfig!
+  dynamic_reconfigure_srv_->setCallback(dynamic_reconfigure_clbk_);
 }
 
 void BonxaiServer::loadParameters()
