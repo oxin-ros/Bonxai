@@ -3,7 +3,7 @@
     <arg name="topic" default=""/>
 
     <node pkg="nodelet" type="nodelet" name="bonxai_mapping"
-        args="standalone bonxai_server/BonxaiServer" output="screen" launch-prefix="gdb -ex run --args">
+        args="standalone bonxai_server/BonxaiServer" output="screen">
 
         <rosparam command="load" file="$(find bonxai_ros)/params/bonxai_params.ros1.yaml" />
 
