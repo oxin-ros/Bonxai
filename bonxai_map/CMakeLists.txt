@@ -41,7 +41,7 @@ endif()
 
 include_directories(include)
 
-add_library(${PROJECT_NAME}
+add_library(${PROJECT_NAME} STATIC
     src/pcl_utils.cpp
     src/probabilistic_map.cpp)
 
