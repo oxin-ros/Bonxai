@@ -226,7 +226,7 @@ void BonxaiServer::publishAll(const ros::Time& rostime)
 
   if (bonxai_result.size() <= 1)
   {
-    NODELET_WARN("Nothing to publish, bonxai is empty");
+    NODELET_WARN_THROTTLE(5, "Nothing to publish, bonxai is empty");
     return;
   }
 
