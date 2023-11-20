@@ -37,7 +37,7 @@ using sensor_msgs::PointCloud2;
 class BonxaiServer : public nodelet::Nodelet
 {
 public:
-  using PointT = pcl::PointXYZ;
+  using PointT = pcl::PointXYZI;
   using PointCloudT = pcl::PointCloud<PointT>;
   using BonxaiT = Bonxai::ProbabilisticMap;
 

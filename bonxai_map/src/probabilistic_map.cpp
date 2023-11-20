@@ -34,7 +34,7 @@ void ProbabilisticMap::setOptions(const Options& options)
   _options = options;
 }
 
-void ProbabilisticMap::addHitPoint(const Vector3D &point)
+void ProbabilisticMap::addHitPoint(const Vector3D &point, const int32_t intensity)
 {
   const auto coord = _grid.posToCoord(point);
   CellT* cell = _accessor.value(coord, true);
@@ -45,6 +45,8 @@ void ProbabilisticMap::addHitPoint(const Vector3D &point)
                                      _options.clamp_max_log);
 
     cell->update_id = _update_count;
+    cell->intensity = intensity;
+
     _hit_coords.push_back(coord);
   }
 }

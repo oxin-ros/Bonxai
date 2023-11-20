@@ -4,6 +4,8 @@
 #include <eigen3/Eigen/Geometry>
 #include <unordered_set>
 
+#include <pcl/point_types.h> // traits::has_intensity.
+
 namespace Bonxai
 {
 
@@ -57,9 +59,12 @@ public:
     // the probability of the cell to be occupied
     int32_t probability_log : 28;
 
+    int32_t intensity;
+
     CellT()
       : update_id(0)
-      , probability_log(UnknownProbability){};
+      , probability_log(UnknownProbability)
+      , intensity(0) {};
   };
 
   /// These default values are the same as OctoMap
@@ -92,7 +97,7 @@ public:
    * The template function can accept points of different types,
    * such as pcl:Point, Eigen::Vector or Bonxai::Point3d
    *
-   * Both origin and points must be in word coordinates
+   * Both origin and points must be in world coordinates
    *
    * @param points   a vector of points which represent detected obstacles
    * @param origin   origin of the point cloud
@@ -107,7 +112,7 @@ public:
   // This function is usually called by insertPointCloud
   // We expose it here to add more control to the user.
   // Once finished adding points, you must call updateFreeCells()
-  void addHitPoint(const Vector3D& point);
+  void addHitPoint(const Vector3D& point, const int32_t intensity = 0);
 
   // This function is usually called by insertPointCloud
   // We expose it here to add more control to the user.
@@ -133,7 +138,9 @@ public:
     for (const auto& coord : coords)
     {
       const auto p = _grid.coordToPos(coord);
-      points.emplace_back(p.x, p.y, p.z);
+      CellT* cell = _accessor.value(coord);
+      const float intensity = (cell != nullptr) ? cell->intensity : 0.0f;
+      points.emplace_back(p.x, p.y, p.z, intensity);
     }
   }
 
@@ -172,7 +179,14 @@ inline void ProbabilisticMap::insertPointCloud(const std::vector<PointT, Alloc>&
       addMissPoint(new_point);
     }
     else {
-      addHitPoint(to);
+      if constexpr( pcl::traits::has_intensity_v<PointT> )
+      {
+        addHitPoint(to, point.intensity);
+      }
+      else
+      {
+        addHitPoint(to);
+      }
     }
   }
   updateFreeCells(from);

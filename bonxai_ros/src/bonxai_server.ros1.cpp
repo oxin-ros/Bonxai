@@ -220,7 +220,7 @@ void BonxaiServer::dynamicReconfigureCallback(bonxai_ros::BonxaiServerConfig &co
 
 void BonxaiServer::publishAll(const ros::Time& rostime)
 {
-  thread_local std::vector<Eigen::Vector3d> bonxai_result;
+  thread_local std::vector<Eigen::Vector4d> bonxai_result;
   bonxai_result.clear();
   bonxai_->getOccupiedVoxels(bonxai_result);
 
@@ -244,7 +244,7 @@ void BonxaiServer::publishAll(const ros::Time& rostime)
     {
       if(voxel.z() >= occupancy_min_z_ && voxel.z() <= occupancy_max_z_)
       {
-        pcl_cloud.push_back(PointT(voxel.x(), voxel.y(), voxel.z()));
+        pcl_cloud.push_back(PointT(voxel.x(), voxel.y(), voxel.z(), voxel.w()));
       }
     }
     PointCloud2 cloud;
