@@ -193,7 +193,7 @@ public:
   /// Set all bits off
   void setOff();
 
-  /// Set all bits too the value "on"
+  /// Set all bits to the value "on"
   void set(bool on);
 
   /// Toggle the state of all bits in the mask
@@ -211,8 +211,8 @@ private:
 
 //----------------------------------------------------------
 /**
- * @brief The Grid class is used to store data in a
- * cube. The size (DIM) of the cube can only be a power of 2
+ * @brief The Grid class is used to store data in a cube.
+ * The size (DIM) of the cube can only be a power of 2.
  *
  * For instance, given Grid(3),
  * DIM will be 8 and SIZE 512 (8³)
@@ -291,16 +291,16 @@ public:
   /// @brief Return the total number of active cells
   [[nodiscard]] size_t activeCellsCount() const;
 
-  /// @brief posToCoord is used to convert real coordinates to CoordT indexes.
+  /// @brief posToCoord is used to convert real coordinates to CoordT indices.
   [[nodiscard]] CoordT posToCoord(double x, double y, double z);
 
-  /// @brief posToCoord is used to convert real coordinates to CoordT indexes.
+  /// @brief posToCoord is used to convert real coordinates to CoordT indices.
   [[nodiscard]] CoordT posToCoord(const Point3D& pos)
   {
     return posToCoord(pos.x, pos.y, pos.z);
   }
 
-  /// @brief coordToPos converts CoordT indexes to Point3D.
+  /// @brief coordToPos converts CoordT indices to Point3D.
   [[nodiscard]] Point3D coordToPos(const CoordT& coord);
 
   /**
@@ -316,7 +316,7 @@ public:
   /** Class to be used to set and get values of a cell of the Grid.
    *  It uses caching to speed up computation.
    *
-   *  Create an instance of this object with the method VoxelGrid::greateAccessor()
+   *  Create an instance of this object with the method VoxelGrid::createAccessor()
    */
   class Accessor
   {
@@ -546,10 +546,7 @@ inline Grid<DataT>& Grid<DataT>::operator=(Grid&& other)
 template <typename DataT>
 inline Grid<DataT>::~Grid()
 {
-  if (data_)
-  {
-    delete[] data_;
-  }
+  delete[] data_;
 }
 
 template <typename DataT>
@@ -806,7 +803,7 @@ inline size_t VoxelGrid<DataT>::activeCellsCount() const
     {
       const int32_t inner_index = *inner_it;
       auto& leaf_grid = inner_grid.cell(inner_index);
-      total_size += leaf_grid->mask.countOn();
+      total_size += leaf_grid->mask().countOn();
     }
   }
   return total_size;
@@ -883,6 +880,7 @@ inline uint32_t Mask::FindLowestOn(uint64_t v)
 #pragma warning(push)
 #pragma warning(disable : 4146)
 #endif
+  /// @warning evil bit twiddling ahead!
   return DeBruijn[uint64_t((v & -v) * UINT64_C(0x022FDD63CC95386D)) >> 58];
 #if defined(_MSC_VER) && !defined(__NVCC__)
 #pragma warning(pop)
@@ -901,6 +899,7 @@ inline uint32_t Mask::CountOn(uint64_t v)
   v = __builtin_popcountll(v);
 #else
   // Software Implementation
+  /// @warning evil bit twiddling ahead!
   v = v - ((v >> 1) & uint64_t(0x5555555555555555));
   v = (v & uint64_t(0x3333333333333333)) + ((v >> 2) & uint64_t(0x3333333333333333));
   v = (((v + (v >> 4)) & uint64_t(0xF0F0F0F0F0F0F0F)) *
@@ -1144,7 +1143,7 @@ struct hash<Bonxai::CoordT>
 {
   std::size_t operator()(const Bonxai::CoordT& p) const
   {
-    // same a OpenVDB
+    // same as OpenVDB
     return ((1 << 20) - 1) & (p.x * 73856093 ^ p.y * 19349663 ^ p.z * 83492791);
   }
 };
