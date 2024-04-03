@@ -34,7 +34,7 @@ void ProbabilisticMap::setOptions(const Options& options)
   _options = options;
 }
 
-void ProbabilisticMap::addHitPoint(const Vector3D &point, const int32_t intensity)
+void ProbabilisticMap::addHitPoint(const Vector3D &point, const double intensity)
 {
   const auto coord = _grid.posToCoord(point);
   CellT* cell = _accessor.value(coord, true);
@@ -45,7 +45,7 @@ void ProbabilisticMap::addHitPoint(const Vector3D &point, const int32_t intensit
                                      _options.clamp_max_log);
 
     cell->update_id = _update_count;
-    cell->intensity = intensity;
+    cell->intensity = (cell->intensity != 0.0) ? (cell->intensity*0.5 + intensity*0.5) : intensity;
 
     _hit_coords.push_back(coord);
   }
@@ -106,6 +106,7 @@ void Bonxai::ProbabilisticMap::updateFreeCells(const Vector3D& origin)
       cell->probability_log = std::max(
           cell->probability_log + _options.prob_miss_log, _options.clamp_min_log);
       cell->update_id = _update_count;
+      cell->intensity = 0.0;
     }
     return true;
   };
@@ -134,9 +135,15 @@ void ProbabilisticMap::getOccupiedVoxels(std::vector<CoordT>& coords)
 {
   coords.clear();
   auto visitor = [&](CellT& cell, const CoordT& coord) {
+    double max_decay = 0.0002;
+    double min_decay = 0.0001;
     if (cell.probability_log > _options.occupancy_threshold_log)
     {
-      coords.push_back(coord);
+      cell.intensity = std::max((cell.intensity + (max_decay - min_decay)*cell.intensity - max_decay), 0.0);
+      if (cell.intensity != 0.0)
+      {
+        coords.push_back(coord);
+      }
     }
   };
   _grid.forEachCell(visitor);

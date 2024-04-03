@@ -59,7 +59,7 @@ public:
     // the probability of the cell to be occupied
     int32_t probability_log : 28;
 
-    int32_t intensity;
+    double intensity;
 
     CellT()
       : update_id(0)
@@ -112,7 +112,7 @@ public:
   // This function is usually called by insertPointCloud
   // We expose it here to add more control to the user.
   // Once finished adding points, you must call updateFreeCells()
-  void addHitPoint(const Vector3D& point, const int32_t intensity = 0);
+  void addHitPoint(const Vector3D& point, const double intensity = 0);
 
   // This function is usually called by insertPointCloud
   // We expose it here to add more control to the user.
@@ -181,7 +181,7 @@ inline void ProbabilisticMap::insertPointCloud(const std::vector<PointT, Alloc>&
     else {
       if constexpr( pcl::traits::has_intensity_v<PointT> )
       {
-        addHitPoint(to, point.intensity);
+        addHitPoint(to, ((point.intensity + 20.0)/40.0));
       }
       else
       {
