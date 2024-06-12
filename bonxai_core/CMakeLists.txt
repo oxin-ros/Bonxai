@@ -38,8 +38,8 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic -fno-omit-frame-pointer)
 endif()
 
-add_library(${PROJECT_NAME} STATIC)
-set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX)
+add_library(${PROJECT_NAME} INTERFACE)
+#set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX)
 
 target_include_directories(${PROJECT_NAME} INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
